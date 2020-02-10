@@ -20,9 +20,9 @@ var helper = require('./app/helper.js');
 var createChannel = require('./app/create-channel.js');
 var join = require('./app/join-channel.js');
 var updateAnchorPeers = require('./app/update-anchor-peers.js');
-// var install = require('./app/install-chaincode.js');
-// var instantiate = require('./app/instantiate-chaincode.js');
-// var invoke = require('./app/invoke-transaction.js');
+var install = require('./app/install-chaincode.js');
+var instantiate = require('./app/instantiate-chaincode.js');
+var invoke = require('./app/invoke-transaction.js');
 // var query = require('./app/query.js');
 var host = process.env.HOST || hfc.getConfigSetting('host');
 var port = process.env.PORT || hfc.getConfigSetting('port');
@@ -168,6 +168,7 @@ app.post('/channels/:channelName/peers', async function(req, res) {
 	let message =  await join.joinChannel(channelName, peers, req.username, req.orgname);
 	res.send(message);
 });
+
 // Update anchor peers
 app.post('/channels/:channelName/anchorpeers', async function(req, res) {
 	logger.debug('==================== UPDATE ANCHOR PEERS ==================');
@@ -185,5 +186,122 @@ app.post('/channels/:channelName/anchorpeers', async function(req, res) {
 	}
 
 	let message = await updateAnchorPeers.updateAnchorPeers(channelName, configUpdatePath, req.username, req.orgname);
+	res.send(message);
+});
+
+// Install chaincode on target peers
+app.post('/chaincodes', async function(req, res) {
+	logger.debug('==================== INSTALL CHAINCODE ==================');
+	var peers = req.body.peers;
+	var chaincodeName = req.body.chaincodeName;
+	var chaincodePath = req.body.chaincodePath;
+	var chaincodeVersion = req.body.chaincodeVersion;
+	var chaincodeType = req.body.chaincodeType;
+	logger.debug('peers : ' + peers); // target peers list
+	logger.debug('chaincodeName : ' + chaincodeName);
+	logger.debug('chaincodePath  : ' + chaincodePath);
+	logger.debug('chaincodeVersion  : ' + chaincodeVersion);
+	logger.debug('chaincodeType  : ' + chaincodeType);
+	if (!peers || peers.length == 0) {
+		res.json(getErrorMessage('\'peers\''));
+		return;
+	}
+	if (!chaincodeName) {
+		res.json(getErrorMessage('\'chaincodeName\''));
+		return;
+	}
+	if (!chaincodePath) {
+		res.json(getErrorMessage('\'chaincodePath\''));
+		return;
+	}
+	if (!chaincodeVersion) {
+		res.json(getErrorMessage('\'chaincodeVersion\''));
+		return;
+	}
+	if (!chaincodeType) {
+		res.json(getErrorMessage('\'chaincodeType\''));
+		return;
+	}
+	let message = await install.installChaincode(peers, chaincodeName, chaincodePath, chaincodeVersion, chaincodeType, req.username, req.orgname)
+	res.send(message);
+});
+
+// Instantiate chaincode on target peers
+app.post('/channels/:channelName/chaincodes', async function(req, res) {
+	logger.debug('==================== INSTANTIATE CHAINCODE ==================');
+	var peers = req.body.peers;
+	var chaincodeName = req.body.chaincodeName;
+	var chaincodeVersion = req.body.chaincodeVersion;
+	var channelName = req.params.channelName;
+	var chaincodeType = req.body.chaincodeType;
+	var collectionsConfig = req.body.collectionsConfig;
+	var fcn = req.body.fcn;
+	var args = req.body.args;
+	logger.debug('peers  : ' + peers);
+	logger.debug('channelName  : ' + channelName);
+	logger.debug('chaincodeName : ' + chaincodeName);
+	logger.debug('chaincodeVersion  : ' + chaincodeVersion);
+	logger.debug('chaincodeType  : ' + chaincodeType);
+	logger.debug('fcn  : ' + fcn);
+	logger.debug('args  : ' + args);
+	if (!chaincodeName) {
+		res.json(getErrorMessage('\'chaincodeName\''));
+		return;
+	}
+	if (!chaincodeVersion) {
+		res.json(getErrorMessage('\'chaincodeVersion\''));
+		return;
+	}
+	if (!channelName) {
+		res.json(getErrorMessage('\'channelName\''));
+		return;
+	}
+	if (!chaincodeType) {
+		res.json(getErrorMessage('\'chaincodeType\''));
+		return;
+	}
+	if (!args) {
+		res.json(getErrorMessage('\'args\''));
+		return;
+	}
+	if (!collectionsConfig) {
+		res.json(getErrorMessage('\'collectionsConfig\''));
+		return;
+	}
+
+	let message = await instantiate.instantiateChaincode(peers, channelName, chaincodeName, chaincodeVersion, chaincodeType, fcn, args, collectionsConfig, req.username, req.orgname);
+	res.send(message);
+});
+
+// Invoke transaction on chaincode on target peers
+app.post('/channels/:channelName/chaincodes/:chaincodeName', async function(req, res) {
+	logger.debug('==================== INVOKE ON CHAINCODE ==================');
+	var peers = req.body.peers;
+	var chaincodeName = req.params.chaincodeName;
+	var channelName = req.params.channelName;
+	var fcn = req.body.fcn;
+	var args = req.body.args;
+	logger.debug('channelName  : ' + channelName);
+	logger.debug('chaincodeName : ' + chaincodeName);
+	logger.debug('fcn  : ' + fcn);
+	logger.debug('args  : ' + args);
+	if (!chaincodeName) {
+		res.json(getErrorMessage('\'chaincodeName\''));
+		return;
+	}
+	if (!channelName) {
+		res.json(getErrorMessage('\'channelName\''));
+		return;
+	}
+	if (!fcn) {
+		res.json(getErrorMessage('\'fcn\''));
+		return;
+	}
+	if (!args) {
+		res.json(getErrorMessage('\'args\''));
+		return;
+	}
+
+	let message = await invoke.invokeChaincode(peers, channelName, chaincodeName, fcn, args, req.username, req.orgname);
 	res.send(message);
 });

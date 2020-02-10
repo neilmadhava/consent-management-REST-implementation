@@ -14,7 +14,9 @@ fi
 
 starttime=$(date +%s)
 
-CC_SRC_PATH="../chaincode/chain_person"
+CC_SRC_PATH="$PWD/chaincode/chain_person"
+CC_CCP_PATH="$PWD/chaincode/chain_person/collections_config.json"
+LANGUAGE="node"
 
 echo "POST request Enroll on airport  ..."
 echo
@@ -135,69 +137,87 @@ curl -s -X POST \
 echo
 echo
 
-# echo "POST Install chaincode on Org1"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/chaincodes \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-# 	\"peers\": [\"peer0.org1.example.com\",\"peer1.org1.example.com\"],
-# 	\"chaincodeName\":\"mycc\",
-# 	\"chaincodePath\":\"$CC_SRC_PATH\",
-# 	\"chaincodeType\": \"$LANGUAGE\",
-# 	\"chaincodeVersion\":\"v0\"
-# }"
-# echo
-# echo
+echo "POST Install chaincode on Airport"
+echo
+curl -s -X POST \
+  http://localhost:4000/chaincodes \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+	\"peers\": [\"peer0.airport.example.com\",\"peer1.airport.example.com\"],
+	\"chaincodeName\":\"chainv1_3\",
+	\"chaincodePath\":\"$CC_SRC_PATH\",
+	\"chaincodeType\": \"$LANGUAGE\",
+	\"chaincodeVersion\":\"1.0\"
+}"
+echo
+echo
 
-# echo "POST Install chaincode on Org2"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/chaincodes \
-#   -H "authorization: Bearer $ORG2_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-# 	\"peers\": [\"peer0.org2.example.com\",\"peer1.org2.example.com\"],
-# 	\"chaincodeName\":\"mycc\",
-# 	\"chaincodePath\":\"$CC_SRC_PATH\",
-# 	\"chaincodeType\": \"$LANGUAGE\",
-# 	\"chaincodeVersion\":\"v0\"
-# }"
-# echo
-# echo
+echo "POST Install chaincode on CCD"
+echo
+curl -s -X POST \
+  http://localhost:4000/chaincodes \
+  -H "authorization: Bearer $ORG2_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.ccd.example.com\",\"peer1.ccd.example.com\"],
+  \"chaincodeName\":\"chainv1_3\",
+  \"chaincodePath\":\"$CC_SRC_PATH\",
+  \"chaincodeType\": \"$LANGUAGE\",
+  \"chaincodeVersion\":\"1.0\"
+}"
+echo
+echo
 
-# echo "POST instantiate chaincode on Org1"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-# 	\"chaincodeName\":\"mycc\",
-# 	\"chaincodeVersion\":\"v0\",
-# 	\"chaincodeType\": \"$LANGUAGE\",
-# 	\"args\":[\"a\",\"100\",\"b\",\"200\"]
-# }"
-# echo
-# echo
+echo "POST Install chaincode on Users"
+echo
+curl -s -X POST \
+  http://localhost:4000/chaincodes \
+  -H "authorization: Bearer $ORG3_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.users.example.com\",\"peer1.users.example.com\"],
+  \"chaincodeName\":\"chainv1_3\",
+  \"chaincodePath\":\"$CC_SRC_PATH\",
+  \"chaincodeType\": \"$LANGUAGE\",
+  \"chaincodeVersion\":\"1.0\"
+}"
+echo
+echo
 
-# echo "POST invoke chaincode on peers of Org1 and Org2"
-# echo
-# VALUES=$(curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/chaincodes/mycc \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d "{
-#   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-#   \"fcn\":\"move\",
-#   \"args\":[\"a\",\"b\",\"10\"]
-# }")
-# echo $VALUES
-# # Assign previous invoke transaction id  to TRX_ID
-# MESSAGE=$(echo $VALUES | jq -r ".message")
-# TRX_ID=${MESSAGE#*ID: }
-# echo
+echo "POST instantiate chaincode on Airport"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.airport.example.com\"],
+	\"chaincodeName\":\"chainv1_3\",
+	\"chaincodeVersion\":\"1.0\",
+	\"chaincodeType\": \"$LANGUAGE\",
+	\"args\":[\"init\"],
+  \"collectionsConfig\":\"$CC_CCP_PATH\"
+}"
+echo
+echo
+
+echo "POST invoke chaincode on peers of Airport, CCD and Users"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/chainv1_3 \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.airport.example.com\",\"peer0.ccd.example.com\",\"peer0.users.example.com\"],
+  \"fcn\":\"initPerson\",
+  \"args\":[\"user_01\",\"Delhi\",\"Mukunda\",\"31-Jan-2020\",\"8178637565\", \"card_01\", \"uid001\", \"mm@gmail.com\", \"high\"]
+}")
+echo $VALUES
+# Assign previous invoke transaction id  to TRX_ID
+MESSAGE=$(echo $VALUES | jq -r ".message")
+TRX_ID=${MESSAGE#*ID: }
+echo
 
 # echo "GET query chaincode on peer1 of Org1"
 # echo
