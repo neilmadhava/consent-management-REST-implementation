@@ -63,53 +63,77 @@ curl -s -X POST \
 echo
 echo
 sleep 5
-# echo "POST request Join channel on Org1"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/peers \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d '{
-# 	"peers": ["peer0.org1.example.com","peer1.org1.example.com"]
-# }'
-# echo
-# echo
+echo "POST request Join channel on Airport"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/peers \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+	"peers": ["peer0.airport.example.com","peer1.airport.example.com"]
+}'
+echo
+echo
 
-# echo "POST request Join channel on Org2"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/peers \
-#   -H "authorization: Bearer $ORG2_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d '{
-# 	"peers": ["peer0.org2.example.com","peer1.org2.example.com"]
-# }'
-# echo
-# echo
+echo "POST request Join channel on CCD"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/peers \
+  -H "authorization: Bearer $ORG2_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+	"peers": ["peer0.ccd.example.com","peer1.ccd.example.com"]
+}'
+echo
+echo
 
-# echo "POST request Update anchor peers on Org1"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/anchorpeers \
-#   -H "authorization: Bearer $ORG1_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d '{
-# 	"configUpdatePath":"../artifacts/channel/Org1MSPanchors.tx"
-# }'
-# echo
-# echo
+echo "POST request Join channel on Users"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/peers \
+  -H "authorization: Bearer $ORG3_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+  "peers": ["peer0.users.example.com","peer1.users.example.com"]
+}'
+echo
+echo
 
-# echo "POST request Update anchor peers on Org2"
-# echo
-# curl -s -X POST \
-#   http://localhost:4000/channels/mychannel/anchorpeers \
-#   -H "authorization: Bearer $ORG2_TOKEN" \
-#   -H "content-type: application/json" \
-#   -d '{
-# 	"configUpdatePath":"../artifacts/channel/Org2MSPanchors.tx"
-# }'
-# echo
-# echo
+echo "POST request Update anchor peers on Airport"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/anchorpeers \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+	"configUpdatePath":"../../channel-artifacts/airportanchors.tx"
+}'
+echo
+echo
+
+echo "POST request Update anchor peers on CCD"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/anchorpeers \
+  -H "authorization: Bearer $ORG2_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+	"configUpdatePath":"../../channel-artifacts/ccdanchors.tx"
+}'
+echo
+echo
+
+echo "POST request Update anchor peers on Users"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/anchorpeers \
+  -H "authorization: Bearer $ORG3_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+  "configUpdatePath":"../../channel-artifacts/usersanchors.tx"
+}'
+echo
+echo
 
 # echo "POST Install chaincode on Org1"
 # echo
