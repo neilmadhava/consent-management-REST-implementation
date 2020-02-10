@@ -1,0 +1,17 @@
+[{
+  	"name": "testCollection",
+    "policy": "OR ('airport.member','users.member')",
+    "requiredPeerCount": 1,
+    "maxPeerCount": 3,
+    "blockToLive":1000000,
+    "memberOnlyRead": true
+  },
+  {
+    "name": "testCollectionPrivate",
+    "policy": "OR ('ccd.member', 'airport.member', 'users.member')",
+    "requiredPeerCount": 1,
+    "maxPeerCount": 3,
+    "blockToLive": 5,
+    "memberOnlyRead": true
+  }
+]

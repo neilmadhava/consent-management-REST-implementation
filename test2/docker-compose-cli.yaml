@@ -1,0 +1,190 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+volumes:
+  orderer.example.com:
+  peer0.airport.example.com:
+  peer1.airport.example.com:
+  peer0.ccd.example.com:
+  peer1.ccd.example.com:
+  peer0.users.example.com:
+  peer1.users.example.com:
+
+networks:
+  consent:
+
+services:
+
+  orderer.example.com:
+    extends:
+      file:   base/docker-compose-base.yaml
+      service: orderer.example.com
+    container_name: orderer.example.com
+    networks:
+      - consent
+
+  ca0:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-airport
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.airport.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/6bb284eea8646a566151747ab035b27eb4bee614f079aa4df65e968a6d678293_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.airport.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/6bb284eea8646a566151747ab035b27eb4bee614f079aa4df65e968a6d678293_sk
+      - FABRIC_CA_SERVER_PORT=7054
+    ports:
+      - "7054:7054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/peerOrganizations/airport.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerAirport
+    networks:
+      - consent
+
+  ca1:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-ccd
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.ccd.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/069490cf2cdc3ecf4b90cb1c2c93ef405cb5105e4b69a95b10f0a22da3a66336_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.ccd.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/069490cf2cdc3ecf4b90cb1c2c93ef405cb5105e4b69a95b10f0a22da3a66336_sk
+      - FABRIC_CA_SERVER_PORT=8054
+    ports:
+      - "8054:8054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/peerOrganizations/ccd.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerCCD
+    networks:
+      - consent
+
+  ca2:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-users
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.users.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/cd9169e28a0442e0088bf73d237c9f59b7c6743ae0039b20e4c3e96797be4822_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.users.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/cd9169e28a0442e0088bf73d237c9f59b7c6743ae0039b20e4c3e96797be4822_sk
+      - FABRIC_CA_SERVER_PORT=9054
+    ports:
+      - "9054:9054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/peerOrganizations/users.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerUsers
+    networks:
+      - consent
+
+  peer0.airport.example.com:
+    container_name: peer0.airport.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.airport.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+  peer1.airport.example.com:
+    container_name: peer1.airport.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.airport.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+  peer0.ccd.example.com:
+    container_name: peer0.ccd.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.ccd.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+  peer1.ccd.example.com:
+    container_name: peer1.ccd.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.ccd.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+  peer0.users.example.com:
+    container_name: peer0.users.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.users.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+  peer1.users.example.com:
+    container_name: peer1.users.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.users.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools
+    tty: true
+    stdin_open: true
+    environment:
+      - SYS_CHANNEL=$SYS_CHANNEL
+      - GOPATH=/opt/gopath
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      #- FABRIC_LOGGING_SPEC=DEBUG
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_ID=cli
+      - CORE_PEER_ADDRESS=peer0.airport.example.com:7051
+      - CORE_PEER_LOCALMSPID=airport
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/airport.example.com/peers/peer0.airport.example.com/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/airport.example.com/peers/peer0.airport.example.com/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/airport.example.com/peers/peer0.airport.example.com/tls/ca.crt
+      - CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/airport.example.com/users/Admin@airport.example.com/msp
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric/peer
+    command: /bin/bash
+    volumes:
+        - /var/run/:/host/var/run/
+        - ./chaincode/:/opt/gopath/src/github.com/chaincode
+        - ./crypto-config:/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/
+        - ./scripts:/opt/gopath/src/github.com/hyperledger/fabric/peer/scripts/
+        - ./channel-artifacts:/opt/gopath/src/github.com/hyperledger/fabric/peer/channel-artifacts
+    depends_on:
+      - orderer.example.com
+      - peer0.airport.example.com
+      - peer1.airport.example.com
+      - peer0.ccd.example.com
+      - peer1.ccd.example.com
+      - peer0.users.example.com
+      - peer1.users.example.com
+      - ca0
+      - ca1
+      - ca2
+    networks:
+      - consent
