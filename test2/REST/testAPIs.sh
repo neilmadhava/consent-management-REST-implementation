@@ -202,6 +202,9 @@ curl -s -X POST \
 echo
 echo
 
+
+sleep 20
+
 echo "POST invoke INITLEDGER chaincode on peers of Airport, CCD and Users"
 echo
 VALUES=$(curl -s -X POST \
@@ -219,6 +222,9 @@ MESSAGE=$(echo $VALUES | jq -r ".message")
 TRX_ID=${MESSAGE#*ID: }
 echo
 
+sleep 10
+
+# ORG1_TOKEN stores token for AIRPORT
 echo "GET query chaincode on peer0 of Airport"
 echo
 curl -s -X GET \
@@ -228,6 +234,7 @@ curl -s -X GET \
 echo
 echo
 
+# ORG2_TOKEN stores token for CCD
 echo "GET query chaincode on peer0 of CCD"
 echo
 curl -s -X GET \
@@ -237,6 +244,7 @@ curl -s -X GET \
 echo
 echo
 
+# ORG3_TOKEN stores token for USERS
 sleep 5
 echo "POST invoke REVOKE_CONSENT chaincode on peers of Airport, CCD and Users"
 echo
@@ -254,6 +262,8 @@ echo $VALUES
 MESSAGE=$(echo $VALUES | jq -r ".message")
 TRX_ID=${MESSAGE#*ID: }
 echo
+
+sleep 10
 
 echo "GET query chaincode on peer0 of Airport"
 echo
@@ -289,6 +299,8 @@ echo $VALUES
 MESSAGE=$(echo $VALUES | jq -r ".message")
 TRX_ID=${MESSAGE#*ID: }
 echo
+
+sleep 10
 
 echo "GET query chaincode on peer0 of Airport"
 echo
