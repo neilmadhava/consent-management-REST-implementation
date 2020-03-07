@@ -4,7 +4,7 @@
 # blockchain network that are necessary for the applications to interact with it. These are all
 # knowledge that must be acquired from out-of-band sources. This file provides such a source.
 #
-name: "cosent"
+name: "consent"
 
 #
 # Any properties with an "x-" prefix will be treated as application-specific, exactly like how naming
