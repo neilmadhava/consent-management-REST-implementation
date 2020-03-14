@@ -13,6 +13,8 @@ volumes:
   peer1.ccd.example.com:
   peer0.users.example.com:
   peer1.users.example.com:
+  peer0.mcd.example.com:
+  peer1.mcd.example.com:
 
 networks:
   consent:
@@ -33,10 +35,10 @@ services:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca-airport
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.airport.example.com-cert.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/6bb284eea8646a566151747ab035b27eb4bee614f079aa4df65e968a6d678293_sk
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/878e9284716a7bb6e166bac7d65850fa7261d10799535e9fa198d9ed53cb7ea9_sk
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.airport.example.com-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/6bb284eea8646a566151747ab035b27eb4bee614f079aa4df65e968a6d678293_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/878e9284716a7bb6e166bac7d65850fa7261d10799535e9fa198d9ed53cb7ea9_sk
       - FABRIC_CA_SERVER_PORT=7054
     ports:
       - "7054:7054"
@@ -53,10 +55,10 @@ services:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca-ccd
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.ccd.example.com-cert.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/069490cf2cdc3ecf4b90cb1c2c93ef405cb5105e4b69a95b10f0a22da3a66336_sk
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/13da9136af15721dd8e243174a080f8a3d3a060211cb80a9e40949c4dd738e70_sk
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.ccd.example.com-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/069490cf2cdc3ecf4b90cb1c2c93ef405cb5105e4b69a95b10f0a22da3a66336_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/13da9136af15721dd8e243174a080f8a3d3a060211cb80a9e40949c4dd738e70_sk
       - FABRIC_CA_SERVER_PORT=8054
     ports:
       - "8054:8054"
@@ -73,10 +75,10 @@ services:
       - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
       - FABRIC_CA_SERVER_CA_NAME=ca-users
       - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.users.example.com-cert.pem
-      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/cd9169e28a0442e0088bf73d237c9f59b7c6743ae0039b20e4c3e96797be4822_sk
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/e993cd0f14062d30cd057f4a29a7819c60c19a25198c8c548f149570d7d08905_sk
       - FABRIC_CA_SERVER_TLS_ENABLED=true
       - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.users.example.com-cert.pem
-      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/cd9169e28a0442e0088bf73d237c9f59b7c6743ae0039b20e4c3e96797be4822_sk
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/e993cd0f14062d30cd057f4a29a7819c60c19a25198c8c548f149570d7d08905_sk
       - FABRIC_CA_SERVER_PORT=9054
     ports:
       - "9054:9054"
@@ -84,6 +86,26 @@ services:
     volumes:
       - ./crypto-config/peerOrganizations/users.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
     container_name: ca_peerUsers
+    networks:
+      - consent
+
+  ca3:
+    image: hyperledger/fabric-ca
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-mcd
+      - FABRIC_CA_SERVER_CA_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.mcd.example.com-cert.pem
+      - FABRIC_CA_SERVER_CA_KEYFILE=/etc/hyperledger/fabric-ca-server-config/4366cf0a8cccf7f6aba3cf7e51b1f94651bf8c9d5b8d36a601331091a0a4a83e_sk
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+      - FABRIC_CA_SERVER_TLS_CERTFILE=/etc/hyperledger/fabric-ca-server-config/ca.mcd.example.com-cert.pem
+      - FABRIC_CA_SERVER_TLS_KEYFILE=/etc/hyperledger/fabric-ca-server-config/4366cf0a8cccf7f6aba3cf7e51b1f94651bf8c9d5b8d36a601331091a0a4a83e_sk
+      - FABRIC_CA_SERVER_PORT=10054
+    ports:
+      - "10054:10054"
+    command: sh -c 'fabric-ca-server start -b admin:adminpw -d'
+    volumes:
+      - ./crypto-config/peerOrganizations/mcd.example.com/ca/:/etc/hyperledger/fabric-ca-server-config
+    container_name: ca_peerMCD
     networks:
       - consent
 
@@ -147,6 +169,26 @@ services:
     networks:
       - consent
 
+  peer0.mcd.example.com:
+    container_name: peer0.mcd.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer0.mcd.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
+  peer1.mcd.example.com:
+    container_name: peer1.mcd.example.com
+    extends:
+      file:  base/docker-compose-base.yaml
+      service: peer1.mcd.example.com
+    depends_on:
+      - orderer.example.com
+    networks:
+      - consent
+
 
   cli:
     container_name: cli
@@ -183,8 +225,11 @@ services:
       - peer1.ccd.example.com
       - peer0.users.example.com
       - peer1.users.example.com
+      - peer0.mcd.example.com
+      - peer1.mcd.example.com
       - ca0
       - ca1
       - ca2
+      - ca3
     networks:
       - consent

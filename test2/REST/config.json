@@ -2,7 +2,7 @@
    "host":"localhost",
    "port":"4000",
    "jwt_expiretime": "36000",
-   "channelName":"chainv1_3",
+   "channelName":"newv1",
    "CC_SRC_PATH":"../chaincode",
    "eventWaitTime":"30000",
    "admins":[

@@ -119,7 +119,6 @@ let Chaincode = class {
       personPrivate.departDate = departDate;
       personPrivate.name = name;
       personPrivate.email = email;
-
     }
     if (consent_type === "high"){
       // ==== Create person object and marshal to JSON ====
@@ -130,32 +129,140 @@ let Chaincode = class {
       personPrivate.email = email;
       personPrivate.phone = phone;
       personPrivate.aadhar_id = aadhar_id;
-
     }
 
+    personState = await stub.getState(userID);
+    if (personState.toString()) {
+      throw new Error('This person with that userID already exists');
+    }
+
+    let personPublic = {};
+    let today = new Date();
+    let date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    let dateTime = date+' '+time;
+
+    personPublic.userID = userID;
+    personPublic.name = name;
+    personPublic.timeOfAction = dateTime;
+    personPublic.consent_status = "consent to all orgs: " + consent_type;
+    personPublic.source = source;
+    personPublic.departDate = departDate;
+
+    await stub.putState(userID, Buffer.from(JSON.stringify(personPublic)));
 
     // === Save person to testCollection ===
     await stub.putPrivateData("testCollection", userID, Buffer.from(JSON.stringify(person)));  
     
-    // === Save personPrivate to testCollectionPrivate ===
-    await stub.putPrivateData("testCollectionPrivate", userID, Buffer.from(JSON.stringify(personPrivate)));
+    // === Save personPrivate to testCollectionCCD and testCollectionMCD ===
+    await stub.putPrivateData("testCollectionCCD", userID, Buffer.from(JSON.stringify(personPrivate)));
+    await stub.putPrivateData("testCollectionMCD", userID, Buffer.from(JSON.stringify(personPrivate)));
 
     console.info('- end init person');
   }
 
+  async getPersonsByRange(stub, args, thisClass) {
+
+    if (args.length < 2) {
+      throw new Error('Incorrect number of arguments. Expecting 2');
+    }
+
+    let startKey = args[0];
+    let endKey = args[1];
+
+    let resultsIterator = await stub.getStateByRange(startKey, endKey);
+    let method = thisClass['getAllResults'];
+    let results = await method(resultsIterator, false);
+
+    return Buffer.from(JSON.stringify(results));
+  }
+
+  async getAllResults(iterator, isHistory) {
+    let allResults = [];
+    while (true) {
+      let res = await iterator.next();
+
+      if (res.value && res.value.value.toString()) {
+        let jsonRes = {};
+        console.log(res.value.value.toString('utf8'));
+
+        if (isHistory && isHistory === true) {
+          jsonRes.TxId = res.value.tx_id;
+          jsonRes.Timestamp = res.value.timestamp;
+          jsonRes.IsDelete = res.value.is_delete.toString();
+          try {
+            jsonRes.Value = JSON.parse(res.value.value.toString('utf8'));
+          } catch (err) {
+            console.log(err);
+            jsonRes.Value = res.value.value.toString('utf8');
+          }
+        } else {
+          jsonRes.Key = res.value.key;
+          try {
+            jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+          } catch (err) {
+            console.log(err);
+            jsonRes.Record = res.value.value.toString('utf8');
+          }
+        }
+        allResults.push(jsonRes);
+      }
+      if (res.done) {
+        console.log('end of data');
+        await iterator.close();
+        console.info(allResults);
+        return allResults;
+      }
+    }
+  }
+
   // ===============================================
-  // readPerson - read a person - for ccd
+  // readPerson - read a person - for ccd/mcd
   // ===============================================
-  async readPerson(stub, args, thisClass) {
+  async readPersonPublic(stub, args, thisClass) {
     if (args.length != 1) {
-      throw new Error('Incorrect number of arguments. Expecting user_id of the person to query');
+      throw new Error('Incorrect number of arguments. Expecting userID to query');
     }
 
     let userID = args[0];
     if (!userID) {
+      throw new Error(' userID must not be empty');
+    }
+    let personAsBytes = await stub.getState(userID); //get the person from chaincode state
+    if (!personAsBytes.toString()) {
+      let jsonResp = {};
+      jsonResp.Error = 'Person does not exist: ' + userID;
+      throw new Error(JSON.stringify(jsonResp));
+    }
+    console.info('=======================================');
+    console.log(personAsBytes.toString());
+    console.info('=======================================');
+    return personAsBytes;
+  }
+
+  // ===============================================
+  // readPerson - read a person - for ccd/mcd
+  // ===============================================
+  async readPerson(stub, args, thisClass) {
+    if (args.length != 2) {
+      throw new Error('Incorrect number of arguments. Expecting user_id, org of the person to query');
+    }
+
+    let userID = args[0];
+    let org = args[1];
+    let collection_name = "";
+
+    if(org=="mcd") {
+      collection_name = "testCollectionMCD";
+    }
+    if(org=="ccd") {
+      collection_name = "testCollectionCCD";
+    }
+
+    if (!userID) {
       throw new Error(' user_id must not be empty');
     }
-    let personAsbytes = await stub.getPrivateData("testCollectionPrivate",userID); //get the person from chaincode state
+    let personAsbytes = await stub.getPrivateData(collection_name, userID); //get the person from chaincode state
     if (!personAsbytes.toString()) {
       let jsonResp = {};
       jsonResp.Error = 'Person does not exist: ' + userID;
@@ -212,13 +319,49 @@ let Chaincode = class {
 
     //remove the person from testCollection
     await stub.deletePrivateData("testCollection", userID);
+
+    valAsbytes = await stub.getPrivateData("testCollectionCCD", userID); //get the person from chaincode state
+    jsonResp = {};
+    if (valAsbytes) {
+      //remove the person from testCollectionCCD
+      await stub.deletePrivateData("testCollectionCCD", userID);
+    }
+
+    valAsbytes = await stub.getPrivateData("testCollectionMCD", userID); //get the person from chaincode state
+    jsonResp = {};
+    if (valAsbytes) {
+      //remove the person from testCollectionCCD
+      await stub.deletePrivateData("testCollectionMCD", userID);
+    }
+
+    let personAsBytes = await stub.getState(userID);
+    if (!personAsBytes || !personAsBytes.toString()) {
+      throw new Error('person does not exist');
+    }
+    let personPublic = {};
+    try {
+      personPublic = JSON.parse(personAsBytes.toString()); //unmarshal
+    } catch (err) {
+      let jsonResp = {};
+      jsonResp.error = 'Failed to decode JSON of: ' + userID;
+      throw new Error(jsonResp);
+    }
+    let today = new Date();
+    let date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    let dateTime = date+' '+time;
+    personPublic.timeOfAction = dateTime;
+    personPublic.consent_status = "deleted data from all records";
+
+    let personJSONasBytes = Buffer.from(JSON.stringify(personPublic));
+    await stub.putState(userID, personJSONasBytes); //rewrite the person
   }
 
   // ===================================================
-  // revokeConsent - delete a person from ccd collections
+  // revokeConsentCCD - delete a person from ccd collections
   // ===================================================
   async revokeConsent(stub, args, thisClass) {
-    if (args.length != 1) {
+    if (args.length != 2) {
       throw new Error('Incorrect number of arguments. Expecting userID of the person to delete');
     }
     let userID = args[0];
@@ -226,7 +369,16 @@ let Chaincode = class {
       throw new Error('userID must not be empty');
     }
 
-    let valAsbytes = await stub.getPrivateData("testCollectionPrivate", userID); //get the person from chaincode state
+    let collection_name = "";
+    let org = args[1].toLowerCase();
+    if(org=="mcd") {
+      collection_name = "testCollectionMCD";
+    }
+    if(org=="ccd") {
+      collection_name = "testCollectionCCD";
+    }
+
+    let valAsbytes = await stub.getPrivateData(collection_name, userID); //get the person from chaincode state
     let jsonResp = {};
     if (!valAsbytes) {
       jsonResp.error = 'person does not exist';
@@ -234,7 +386,165 @@ let Chaincode = class {
     }
 
     //remove the person from testCollection
-    await stub.deletePrivateData("testCollectionPrivate", userID);
+    await stub.deletePrivateData(collection_name, userID);
+
+    let personAsBytes = await stub.getState(userID);
+    if (!personAsBytes || !personAsBytes.toString()) {
+      throw new Error('person does not exist');
+    }
+    let personPublic = {};
+    try {
+      personPublic = JSON.parse(personAsBytes.toString()); //unmarshal
+    } catch (err) {
+      let jsonResp = {};
+      jsonResp.error = 'Failed to decode JSON of: ' + userID;
+      throw new Error(jsonResp);
+    }
+    let today = new Date();
+    let date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    let dateTime = date+' '+time;
+    personPublic.timeOfAction = dateTime;
+    personPublic.consent_status = "revoked consent from " + org;
+
+    let personJSONasBytes = Buffer.from(JSON.stringify(personPublic));
+    await stub.putState(userID, personJSONasBytes); //rewrite the person
+  }
+
+  // ===================================================
+  // giveConsent - Reinsert a person to ccd collections
+  // ===================================================
+  async giveConsent(stub, args, thisClass) {
+    if (args.length < 3) {
+      throw new Error('Incorrect number of arguments. Expecting username, consent_type, org')
+    }
+
+    let username = args[0];
+    let newConsent = args[1].toLowerCase();
+    let org = args[2].toLowerCase();
+    console.info('- start updateConsent ', username, newConsent, org);
+
+    let collection_name = "";
+    if(org=="mcd") {
+      collection_name = "testCollectionMCD";
+    }
+    if(org=="ccd") {
+      collection_name = "testCollectionCCD";
+    }
+
+    let personAsBytes = await stub.getPrivateData("testCollection", username);
+    if (!personAsBytes || !personAsBytes.toString()) {
+      throw new Error('person does not exist');
+    }
+
+    let person = {};
+    try {
+      person = JSON.parse(personAsBytes.toString()); //unmarshal
+    } catch (err) {
+      let jsonResp = {};
+      jsonResp.error = 'Failed to decode JSON of: ' + username;
+      throw new Error(jsonResp);
+    }
+    console.info(person);
+    person.consent_type = newConsent;
+    if (newConsent === "low"){
+      delete person.name;
+      delete person.email;
+      delete person.phone;
+      delete person.aadhar_id;
+      delete person.creditCard;
+      delete person.consent_type;
+    }
+    if (newConsent === "medium"){
+      delete person.phone;
+      delete person.aadhar_id;
+      delete person.creditCard;
+      delete person.consent_type;
+    }
+    if (newConsent === "high"){
+      delete person.creditCard;
+      delete person.consent_type;
+    }
+
+    let personJSONasBytes = Buffer.from(JSON.stringify(person));
+    await stub.putPrivateData(collection_name, username, personJSONasBytes); //rewrite person
+
+    personAsBytes = await stub.getState(username);
+    if (!personAsBytes || !personAsBytes.toString()) {
+      throw new Error('person does not exist');
+    }
+    let personPublic = {};
+    try {
+      personPublic = JSON.parse(personAsBytes.toString()); //unmarshal
+    } catch (err) {
+      let jsonResp = {};
+      jsonResp.error = 'Failed to decode JSON of: ' + username;
+      throw new Error(jsonResp);
+    }
+    let today = new Date();
+    let date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+    let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    let dateTime = date+' '+time;
+    personPublic.timeOfAction = dateTime;
+    personPublic.consent_status = "updated consent for " + org + " to: " + newConsent;
+
+    personJSONasBytes = Buffer.from(JSON.stringify(personPublic));
+    await stub.putState(username, personJSONasBytes); //rewrite the person
+
+  }
+
+  async getHistoryForPerson(stub, args, thisClass) {
+
+    if (args.length < 1) {
+      throw new Error('Incorrect number of arguments. Expecting 1')
+    }
+    let username = args[0];
+    console.info('- start getHistoryForPerson: %s\n', username);
+
+    let resultsIterator = await stub.getHistoryForKey(username);
+    let method = thisClass['getAllResults'];
+    let results = await method(resultsIterator, true);
+
+    return Buffer.from(JSON.stringify(results));
+  }
+
+  async getAllResults(iterator, isHistory) {
+    let allResults = [];
+    while (true) {
+      let res = await iterator.next();
+
+      if (res.value && res.value.value.toString()) {
+        let jsonRes = {};
+        console.log(res.value.value.toString('utf8'));
+
+        if (isHistory && isHistory === true) {
+          jsonRes.TxId = res.value.tx_id;
+          jsonRes.Timestamp = res.value.timestamp;
+          jsonRes.IsDelete = res.value.is_delete.toString();
+          try {
+            jsonRes.Value = JSON.parse(res.value.value.toString('utf8'));
+          } catch (err) {
+            console.log(err);
+            jsonRes.Value = res.value.value.toString('utf8');
+          }
+        } else {
+          jsonRes.Key = res.value.key;
+          try {
+            jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+          } catch (err) {
+            console.log(err);
+            jsonRes.Record = res.value.value.toString('utf8');
+          }
+        }
+        allResults.push(jsonRes);
+      }
+      if (res.done) {
+        console.log('end of data');
+        await iterator.close();
+        console.info(allResults);
+        return allResults;
+      }
+    }
   }
 
 };

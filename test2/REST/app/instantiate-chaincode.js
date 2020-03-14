@@ -57,10 +57,11 @@ const instantiateChaincode = async function(peers, channelName, chaincodeName, c
 			        identities: [
 					{ role: { name: 'member', mspId: 'airport' }},
 					{ role: { name: 'member', mspId: 'ccd' }},
-					{ role: { name: 'member', mspId: 'users' }}
+					{ role: { name: 'member', mspId: 'users' }},
+					{ role: { name: 'member', mspId: 'mcd' }}
 			        ],
 			        policy: {
-					'1-of':[{ 'signed-by': 0 }, { 'signed-by': 1 }, { 'signed-by': 2 }]
+					'1-of':[{ 'signed-by': 0 }, { 'signed-by': 1 }, { 'signed-by': 2 }, { 'signed-by': 3 }]
 			        }
 		        }
 		};

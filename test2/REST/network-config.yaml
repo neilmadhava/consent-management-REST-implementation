@@ -98,12 +98,24 @@ channels:
         ledgerQuery: true
         eventSource: false
 
+      peer0.mcd.example.com:
+        endorsingPeer: true
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: true
+
+      peer1.mcd.example.com:
+        endorsingPeer: false
+        chaincodeQuery: true
+        ledgerQuery: true
+        eventSource: false
+
     # [Optional]. what chaincodes are expected to exist on this channel? The application can use
     # this information to validate that the target peers are in the expected state by comparing
     # this list with the query results of getInstalledChaincodes() and getInstantiatedChaincodes()
     chaincodes:
       # the format follows the "cannonical name" of chaincodes by fabric code
-      - chainv1_3:v0
+      - newv1:v0
 
 #
 # list of participating organizations in this network
@@ -132,7 +144,7 @@ organizations:
     # this way. The SDK should allow applications to set the org admin identity via APIs, and only use
     # this route as an alternative when it exists.
     adminPrivateKey:
-      path: crypto-config/peerOrganizations/airport.example.com/users/Admin@airport.example.com/msp/keystore/38af105ab4697cba4ebcead7fd068eae977eb0e10081863204851462e241c121_sk
+      path: crypto-config/peerOrganizations/airport.example.com/users/Admin@airport.example.com/msp/keystore/948a09b72b0f47405e311a1d3a405c4e704862bd992ef95c809fcda90d4da677_sk
     signedCert:
       path: crypto-config/peerOrganizations/airport.example.com/users/Admin@airport.example.com/msp/signcerts/Admin@airport.example.com-cert.pem
 
@@ -149,7 +161,7 @@ organizations:
     certificateAuthorities:
       - ca-ccd
     adminPrivateKey:
-      path: crypto-config/peerOrganizations/ccd.example.com/users/Admin@ccd.example.com/msp/keystore/a4c2b2b57b65cfe9e23df5df9d9f85a7e8769d637c087a347510673f83f39176_sk
+      path: crypto-config/peerOrganizations/ccd.example.com/users/Admin@ccd.example.com/msp/keystore/b519fe18e945f35f064645e3f18ed9903d10f179357e0b4b8e6888354da7c5b6_sk
     signedCert:
       path: crypto-config/peerOrganizations/ccd.example.com/users/Admin@ccd.example.com/msp/signcerts/Admin@ccd.example.com-cert.pem
 
@@ -161,9 +173,22 @@ organizations:
     certificateAuthorities:
       - ca-users
     adminPrivateKey:
-      path: crypto-config/peerOrganizations/users.example.com/users/Admin@users.example.com/msp/keystore/cd93b2e6bec6a8ddcc1fd50df1a2adf9a9579f0f547de21d689a06c404ae5202_sk
+      path: crypto-config/peerOrganizations/users.example.com/users/Admin@users.example.com/msp/keystore/09b669922b19444322c0cbab3f324ae81bfedfb834faa749fa932b4e24b915a9_sk
     signedCert:
       path: crypto-config/peerOrganizations/users.example.com/users/Admin@users.example.com/msp/signcerts/Admin@users.example.com-cert.pem
+
+  mcd:
+    mspid: mcd
+    peers:
+      - peer0.mcd.example.com
+      - peer1.mcd.example.com
+    certificateAuthorities:
+      - ca-mcd
+    adminPrivateKey:
+      path: crypto-config/peerOrganizations/mcd.example.com/users/Admin@mcd.example.com/msp/keystore/40adf6709c36ff822dcb31e67bbc451af7300d9b5ef6689c879a66120ebeb32c_sk
+    signedCert:
+      path: crypto-config/peerOrganizations/mcd.example.com/users/Admin@mcd.example.com/msp/signcerts/Admin@mcd.example.com-cert.pem
+
 
 #
 # List of orderers to send transaction and channel create/update requests to. For the time
@@ -231,6 +256,20 @@ peers:
     tlsCACerts:
       path: crypto-config/peerOrganizations/users.example.com/peers/peer1.users.example.com/tls/ca.crt
 
+  peer0.mcd.example.com:
+    url: grpcs://localhost:13051
+    grpcOptions:
+      ssl-target-name-override: peer0.mcd.example.com
+    tlsCACerts:
+      path: crypto-config/peerOrganizations/mcd.example.com/peers/peer0.mcd.example.com/tls/ca.crt
+
+  peer1.mcd.example.com:
+    url: grpcs://localhost:14051
+    grpcOptions:
+      ssl-target-name-override: peer1.mcd.example.com
+    tlsCACerts:
+      path: crypto-config/peerOrganizations/mcd.example.com/peers/peer1.mcd.example.com/tls/ca.crt
+
 #
 # Fabric-CA is a special kind of Certificate Authority provided by Hyperledger Fabric which allows
 # certificate management to be done via REST APIs. Application may choose to use a standard
@@ -277,3 +316,15 @@ certificateAuthorities:
         enrollSecret: adminpw
     # [Optional] The optional name of the CA.
     caName: ca-users
+
+  ca-mcd:
+    url: https://localhost:10054
+    httpOptions:
+      verify: false
+    tlsCACerts:
+      path: crypto-config/peerOrganizations/mcd.example.com/ca/ca.mcd.example.com-cert.pem
+    registrar:
+      - enrollId: admin
+        enrollSecret: adminpw
+    # [Optional] The optional name of the CA.
+    caName: ca-mcd

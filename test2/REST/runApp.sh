@@ -18,6 +18,7 @@ function dkcl(){
 	rm -r fabric-client-kv-airport
 	rm -r fabric-client-kv-ccd
 	rm -r fabric-client-kv-users
+	rm -r fabric-client-kv-mcd
 }
 
 

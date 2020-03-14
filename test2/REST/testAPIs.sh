@@ -29,6 +29,9 @@ ORG1_TOKEN=$(echo $ORG1_TOKEN | jq ".token" | sed "s/\"//g")
 echo
 echo "ORG1 token is $ORG1_TOKEN"
 echo
+
+
+
 echo "POST request Enroll on ccd ..."
 echo
 ORG2_TOKEN=$(curl -s -X POST \
@@ -40,6 +43,9 @@ ORG2_TOKEN=$(echo $ORG2_TOKEN | jq ".token" | sed "s/\"//g")
 echo
 echo "ORG2 token is $ORG2_TOKEN"
 echo
+
+
+
 echo "POST request Enroll on users ..."
 echo
 ORG3_TOKEN=$(curl -s -X POST \
@@ -51,6 +57,22 @@ ORG3_TOKEN=$(echo $ORG3_TOKEN | jq ".token" | sed "s/\"//g")
 echo
 echo "ORG3 token is $ORG3_TOKEN"
 echo
+
+
+
+echo "POST request Enroll on mcd ..."
+echo
+ORG4_TOKEN=$(curl -s -X POST \
+  http://localhost:4000/users \
+  -H "content-type: application/x-www-form-urlencoded" \
+  -d 'username=Allen&orgName=mcd')
+echo $ORG4_TOKEN
+ORG4_TOKEN=$(echo $ORG4_TOKEN | jq ".token" | sed "s/\"//g")
+echo
+echo "ORG4 token is $ORG4_TOKEN"
+echo
+
+
 echo
 echo "POST request Create channel  ..."
 echo
@@ -65,6 +87,8 @@ curl -s -X POST \
 echo
 echo
 sleep 5
+
+
 echo "POST request Join channel on Airport"
 echo
 curl -s -X POST \
@@ -97,6 +121,18 @@ curl -s -X POST \
   -H "content-type: application/json" \
   -d '{
   "peers": ["peer0.users.example.com","peer1.users.example.com"]
+}'
+echo
+echo
+
+echo "POST request Join channel on MCD"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/peers \
+  -H "authorization: Bearer $ORG4_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+  "peers": ["peer0.mcd.example.com","peer1.mcd.example.com"]
 }'
 echo
 echo
@@ -137,6 +173,18 @@ curl -s -X POST \
 echo
 echo
 
+echo "POST request Update anchor peers on MCD"
+echo
+curl -s -X POST \
+  http://localhost:4000/channels/mychannel/anchorpeers \
+  -H "authorization: Bearer $ORG4_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+  "configUpdatePath":"../../channel-artifacts/mcdanchors.tx"
+}'
+echo
+echo
+
 echo "POST Install chaincode on Airport"
 echo
 curl -s -X POST \
@@ -145,7 +193,7 @@ curl -s -X POST \
   -H "content-type: application/json" \
   -d "{
 	\"peers\": [\"peer0.airport.example.com\",\"peer1.airport.example.com\"],
-	\"chaincodeName\":\"chainv1_3\",
+	\"chaincodeName\":\"newv3\",
 	\"chaincodePath\":\"$CC_SRC_PATH\",
 	\"chaincodeType\": \"$LANGUAGE\",
 	\"chaincodeVersion\":\"1.0\"
@@ -161,7 +209,7 @@ curl -s -X POST \
   -H "content-type: application/json" \
   -d "{
   \"peers\": [\"peer0.ccd.example.com\",\"peer1.ccd.example.com\"],
-  \"chaincodeName\":\"chainv1_3\",
+  \"chaincodeName\":\"newv3\",
   \"chaincodePath\":\"$CC_SRC_PATH\",
   \"chaincodeType\": \"$LANGUAGE\",
   \"chaincodeVersion\":\"1.0\"
@@ -177,7 +225,23 @@ curl -s -X POST \
   -H "content-type: application/json" \
   -d "{
   \"peers\": [\"peer0.users.example.com\",\"peer1.users.example.com\"],
-  \"chaincodeName\":\"chainv1_3\",
+  \"chaincodeName\":\"newv3\",
+  \"chaincodePath\":\"$CC_SRC_PATH\",
+  \"chaincodeType\": \"$LANGUAGE\",
+  \"chaincodeVersion\":\"1.0\"
+}"
+echo
+echo
+
+echo "POST Install chaincode on MCD"
+echo
+curl -s -X POST \
+  http://localhost:4000/chaincodes \
+  -H "authorization: Bearer $ORG4_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.mcd.example.com\",\"peer1.mcd.example.com\"],
+  \"chaincodeName\":\"newv3\",
   \"chaincodePath\":\"$CC_SRC_PATH\",
   \"chaincodeType\": \"$LANGUAGE\",
   \"chaincodeVersion\":\"1.0\"
@@ -193,7 +257,7 @@ curl -s -X POST \
   -H "content-type: application/json" \
   -d "{
   \"peers\": [\"peer0.airport.example.com\"],
-	\"chaincodeName\":\"chainv1_3\",
+	\"chaincodeName\":\"newv3\",
 	\"chaincodeVersion\":\"1.0\",
 	\"chaincodeType\": \"$LANGUAGE\",
 	\"args\":[\"init\"],
@@ -203,16 +267,16 @@ echo
 echo
 
 
-sleep 20
+sleep 10
 
 echo "POST invoke INITLEDGER chaincode on peers of Airport, CCD and Users"
 echo
 VALUES=$(curl -s -X POST \
-  http://localhost:4000/channels/mychannel/chaincodes/chainv1_3 \
+  http://localhost:4000/channels/mychannel/chaincodes/newv3 \
   -H "authorization: Bearer $ORG1_TOKEN" \
   -H "content-type: application/json" \
   -d "{
-  \"peers\": [\"peer0.airport.example.com\",\"peer0.ccd.example.com\",\"peer0.users.example.com\"],
+  \"peers\": [\"peer0.airport.example.com\"],
   \"fcn\":\"initPerson\",
   \"args\":[\"user_01\",\"Delhi\",\"Mukunda\",\"31-Jan-2020\",\"8178637565\", \"card_01\", \"uid001\", \"mm@gmail.com\", \"medium\"]
 }")
@@ -225,20 +289,30 @@ echo
 sleep 10
 
 # ORG1_TOKEN stores token for AIRPORT
-echo "GET query chaincode on peer0 of Airport"
+echo "Query as Airport"
 echo
 curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/chaincodes/chainv1_3?peer=peer0.airport.example.com&fcn=readPrivatePerson&args=%5B%22user_01%22%5D" \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=readPrivatePerson&args=%5B%22user_01%22%5D" \
   -H "authorization: Bearer $ORG1_TOKEN" \
   -H "content-type: application/json"
 echo
 echo
 
 # ORG2_TOKEN stores token for CCD
-echo "GET query chaincode on peer0 of CCD"
 echo
+echo echo "Query as CCD"
 curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/chaincodes/chainv1_3?peer=peer0.ccd.example.com&fcn=readPerson&args=%5B%22user_01%22%5D" \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=readPerson&args=%5B%22user_01%22%2C%20%22ccd%22%5D" \
+  -H "authorization: Bearer $ORG2_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo
+
+echo
+echo
+echo echo "Query as MCD"
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=readPerson&args=%5B%22user_01%22%2C%20%22mcd%22%5D" \
   -H "authorization: Bearer $ORG2_TOKEN" \
   -H "content-type: application/json"
 echo
@@ -246,16 +320,16 @@ echo
 
 # ORG3_TOKEN stores token for USERS
 sleep 5
-echo "POST invoke REVOKE_CONSENT chaincode on peers of Airport, CCD and Users"
+echo "POST invoke REVOKE_CONSENT for ccd chaincode on peers of Airport"
 echo
 VALUES=$(curl -s -X POST \
-  http://localhost:4000/channels/mychannel/chaincodes/chainv1_3 \
+  http://localhost:4000/channels/mychannel/chaincodes/newv3 \
   -H "authorization: Bearer $ORG3_TOKEN" \
   -H "content-type: application/json" \
   -d "{
-  \"peers\": [\"peer0.airport.example.com\",\"peer0.ccd.example.com\",\"peer0.users.example.com\"],
+  \"peers\": [\"peer0.airport.example.com\"],
   \"fcn\":\"revokeConsent\",
-  \"args\":[\"user_01\"]
+  \"args\":[\"user_01\", \"ccd\"]
 }")
 echo $VALUES
 # Assign previous invoke transaction id  to TRX_ID
@@ -265,32 +339,62 @@ echo
 
 sleep 10
 
-echo "GET query chaincode on peer0 of Airport"
-echo
-curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/chaincodes/chainv1_3?peer=peer0.airport.example.com&fcn=readPrivatePerson&args=%5B%22user_01%22%5D" \
-  -H "authorization: Bearer $ORG1_TOKEN" \
-  -H "content-type: application/json"
-echo
-echo
 
 echo "GET query chaincode on peer0 of CCD"
 echo
 curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/chaincodes/chainv1_3?peer=peer0.ccd.example.com&fcn=readPerson&args=%5B%22user_01%22%5D" \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=readPerson&args=%5B%22user_01%22%2C%20%22ccd%22%5D" \
   -H "authorization: Bearer $ORG2_TOKEN" \
   -H "content-type: application/json"
 echo
 echo
 
-echo "POST invoke DELETE_PERSON chaincode on peers of Airport, CCD and Users"
+echo "POST invoke GIVE_CONSENT for ccd chaincode on peers of Airport"
 echo
 VALUES=$(curl -s -X POST \
-  http://localhost:4000/channels/mychannel/chaincodes/chainv1_3 \
+  http://localhost:4000/channels/mychannel/chaincodes/newv3 \
   -H "authorization: Bearer $ORG3_TOKEN" \
   -H "content-type: application/json" \
   -d "{
-  \"peers\": [\"peer0.airport.example.com\",\"peer0.users.example.com\"],
+  \"peers\": [\"peer0.airport.example.com\"],
+  \"fcn\":\"giveConsent\",
+  \"args\":[\"user_01\", \"low\", \"CCD\"]
+}")
+echo $VALUES
+# Assign previous invoke transaction id  to TRX_ID
+MESSAGE=$(echo $VALUES | jq -r ".message")
+TRX_ID=${MESSAGE#*ID: }
+echo
+
+sleep 10
+
+echo "GET query chaincode on peer0 of CCD"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=readPerson&args=%5B%22user_01%22%2C%20%22ccd%22%5D" \
+  -H "authorization: Bearer $ORG2_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo
+
+echo "Query all users on chaincode on peer0 of Airport"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=getPersonsByRange&args=%5B%22%22%2C%20%22%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo
+
+
+echo "POST invoke DELETE_PERSON chaincode on peers of Airport, CCD and Users"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/newv3 \
+  -H "authorization: Bearer $ORG3_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.airport.example.com\"],
   \"fcn\":\"deletePerson\",
   \"args\":[\"user_01\"]
 }")
@@ -305,11 +409,24 @@ sleep 10
 echo "GET query chaincode on peer0 of Airport"
 echo
 curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/chaincodes/chainv1_3?peer=peer0.airport.example.com&fcn=readPrivatePerson&args=%5B%22user_01%22%5D" \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=readPrivatePerson&args=%5B%22user_01%22%5D" \
   -H "authorization: Bearer $ORG1_TOKEN" \
   -H "content-type: application/json"
 echo
 echo
+
+
+echo "GET history query chaincode on peer0 of Airport"
+echo
+curl -s -X GET \
+  "http://localhost:4000/channels/mychannel/chaincodes/newv3?peer=peer0.airport.example.com&fcn=getHistoryForPerson&args=%5B%22user_01%22%5D" \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json"
+echo
+echo
+
+
+
 
 # echo "GET query Block by blockNumber"
 # echo

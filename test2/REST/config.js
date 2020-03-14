@@ -10,5 +10,7 @@ hfc.setConfigSetting('network-connection-profile-path',path.join(__dirname, file
 hfc.setConfigSetting('airport-connection-profile-path',path.join(__dirname, 'airport.yaml'));
 hfc.setConfigSetting('ccd-connection-profile-path',path.join(__dirname, 'ccd.yaml'));
 hfc.setConfigSetting('users-connection-profile-path',path.join(__dirname, 'users.yaml'));
+hfc.setConfigSetting('mcd-connection-profile-path',path.join(__dirname, 'mcd.yaml'));
+
 // some other settings the application might need to know
 hfc.addConfigFile(path.join(__dirname, 'config.json'));

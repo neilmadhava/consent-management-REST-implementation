@@ -152,3 +152,48 @@ services:
         - peer1.users.example.com:/var/hyperledger/production
     ports:
       - 12051:12051
+
+  peer0.mcd.example.com:
+    container_name: peer0.mcd.example.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.mcd.example.com
+      - CORE_PEER_ADDRESS=peer0.mcd.example.com:13051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:13051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.mcd.example.com:13052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:13052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.mcd.example.com:13051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.mcd.example.com:14051
+      - CORE_PEER_LOCALMSPID=mcd
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/mcd.example.com/peers/peer0.mcd.example.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/mcd.example.com/peers/peer0.mcd.example.com/tls:/etc/hyperledger/fabric/tls
+        - peer0.mcd.example.com:/var/hyperledger/production
+    ports:
+      - 13051:13051
+
+  peer1.mcd.example.com:
+    container_name: peer1.mcd.example.com
+    extends:
+      file: peer-base.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.mcd.example.com
+      - CORE_PEER_ADDRESS=peer1.mcd.example.com:14051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:14051
+      - CORE_PEER_CHAINCODEADDRESS=peer1.mcd.example.com:14052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:14052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.mcd.example.com:14051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.mcd.example.com:13051
+      - CORE_PEER_LOCALMSPID=mcd
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/mcd.example.com/peers/peer1.mcd.example.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/mcd.example.com/peers/peer1.mcd.example.com/tls:/etc/hyperledger/fabric/tls
+        - peer1.mcd.example.com:/var/hyperledger/production
+    ports:
+      - 14051:14051
+
