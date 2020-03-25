@@ -17,6 +17,15 @@ cd test2/REST/
 
 ./testAPIs.sh runs through all the interactions with the server.
 
+## Features of the project
+
+1. Users can submit peronal information to the airport while deciding level of data access provided to third-party organizations (Low/Medium/High)
+2. Once data is shared with 3rd party organization (CCD/MCD in this case), users have the capability to revoke consent at any time.
+3. Users can also update level of consent from low to high, high to medium and so on.
+4. Right to be forgotten - Users can decide to delete all their private data from all organizations. Hence users are in complete control over their data.
+5. The airport organization can audit user which means it can view the history of consent for a particular user. The changes made to consent level for different organizations can be tracked through time since this information is stored on the channel ledger.
+
+
 ## Description of APIs
 
 Route | Method| Description
