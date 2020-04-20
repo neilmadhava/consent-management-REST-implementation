@@ -19,7 +19,7 @@ cd test2/REST/
 
 ## Features of the project
 
-1. Users can submit peronal information to the airport while deciding level of data access provided to third-party organizations (Low/Medium/High)
+1. Users can submit personal information to the airport while deciding level of data access provided to third-party organizations (Low/Medium/High)
 2. Once data is shared with 3rd party organization (CCD/MCD in this case), users have the capability to revoke consent at any time.
 3. Users can also update level of consent from low to high, high to medium and so on.
 4. Right to be forgotten - Users can decide to delete all their private data from all organizations. Hence users are in complete control over their data.
@@ -41,4 +41,5 @@ Route | Method| Description
 
 ## Frontend Implementation
 
-https://github.com/neilmadhava/frontend-consent
+Desktop UI - https://github.com/neilmadhava/frontend-consent
+Web UI - https://github.com/neilmadhava/react-ui-blockchain
